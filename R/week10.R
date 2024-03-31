@@ -17,4 +17,14 @@ gss_tbl <- read_sav("../data/GSS2016.sav") %>% #importing data into R
 #Visualization
 ggplot(gss_tbl, aes(x=`work hours`)) +
 geom_histogram() +
-labs(x= "Work Hours", y= "Frequency", title= "Frequency of Work Hours Histogram")
+labs(x= "Work Hours", y= "Frequency", title= "Frequency of Work Hours Histogram") #visualizing data
+
+#Analysis
+set.seed(84) #setting seed for reproducibility 
+rows <- sample(nrow(gss_tbl)) #randomly ordering dataset per data camp
+gss_shuffle <- gss_tbl[rows, ] #same as above comment
+gss_split <- round(nrow(gss_shuffle) * 0.75) #creating split data
+gss_train <- gss_shuffle[1:gss_split, ] #creating train data
+gss_test <- gss_shuffle[(gss_split + 1):nrow(gss_shuffle), ] #creating test data 
+
+
