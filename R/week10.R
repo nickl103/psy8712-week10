@@ -3,16 +3,18 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(tidyverse)
 library(haven)
 library(caret)
+library(stats)
 
 #Data Import and Cleaning
 gss_tbl <- read_sav("../data/GSS2016.sav") %>% #importing data into R
-  tibble() %>% #converting to a tibble
+  mutate_all(~ifelse(.==0, NA, .)) %>% #mutating non-answers to NA%>%
   filter(!is.na(MOSTHRS)) %>% #filtering nas from MOSTHRS
-  mutate(across(everything(~ifelse(.==0, NA, .)))) %>%
   rename(`work hours` = MOSTHRS) %>% #renaming MOSTHRS to work hours
   select(-HRS1, -HRS2) %>% #removing HRS1 and HRS2 from data
-  select_if(~mean(is.na(.))<.75) %>% #removing any variables with less than 75% missingness
+  select(-where(~mean(is.na(.))>.75)) %>% #removing any variables with less than 75% missingness
   mutate_all(as.numeric) #converting to as numeric
+
+
 
 #Visualization
 ggplot(gss_tbl, aes(x=`work hours`)) +
@@ -20,11 +22,50 @@ geom_histogram() +
 labs(x= "Work Hours", y= "Frequency", title= "Frequency of Work Hours Histogram") #visualizing data
 
 #Analysis
-set.seed(84) #setting seed for reproducibility 
+set.seed(1234) #setting seed for reproducibility 
 rows <- sample(nrow(gss_tbl)) #randomly ordering dataset per data camp
 gss_shuffle <- gss_tbl[rows, ] #same as above comment
-gss_split <- round(nrow(gss_shuffle) * 0.75) #creating split data
-gss_train <- gss_shuffle[1:gss_split, ] #creating train data
-gss_test <- gss_shuffle[(gss_split + 1):nrow(gss_shuffle), ] #creating test data 
+gss_split <- round(nrow(gss_shuffle) * 0.75) #creating split data per data camp
+gss_train <- gss_shuffle[1:gss_split, ] #creating train data per data camp
+gss_test <- gss_shuffle[(gss_split + 1):nrow(gss_shuffle), ] #creating test data per data camp
+
+###Pre-setting things needed for models
+index_folds <- createFolds(gss_train$`work hours`, 10) #creating folds for indexout. 
+
+myControl <- trainControl(
+  method= "cv",
+  indexOut= index_folds,
+  number= 10, # 10-fold cv, 
+  verboseIter = TRUE) #setting these now so I don't have to keep retyping it for each model based on requested number of cv folds and data camp
 
 
+###OLS model
+Ols_Model <- train(`work hours` ~ ., #predicting work hours from all variables in dataset
+  data = gss_train, #using split train data for 10-fold CV
+  method = "lm", #lm for OLS model
+  metric = "Rsquared", #will need later for publication section
+  preProcess = "medianImpute", #median Impute to deal with missing values per assignment instructions
+  na.action = na.pass, #so model will go passed nas and actually run otherwise it won't work 
+  trControl = myControl #used so I didn't have to retype every time. 
+)
+
+OLS_Model_test <- predict(Ols_Model, gss_test, na.action= na.pass) #testing OLS model on test data
+
+###Elastic Net model
+
+myGrid <- expand.grid(alpha =1, lambda =.1) #setting gridsearch for hyperparameters
+
+EN_Model <- train(`work hours` ~ ., 
+  data = gss_train, 
+  tuneGrid = myGrid,
+  method = "glmnet",#used glmnet to run the elastic net model
+  metric= "Rsquared", # need later
+  preProcess = "medianImpute", #median Impute per assignment 
+  na.action = na.pass, #need otherwise it won't work
+  trControl = myControl) #same as above
+
+EN_Model_test <- predict(EN_Model, gss_test, na.action= na.pass) #testing EN model on test data
+
+###Random Forest Model
+
+RF_grid <- tunegrid
