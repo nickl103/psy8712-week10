@@ -27,7 +27,7 @@ rows <- sample(nrow(gss_tbl)) #randomly ordering dataset per data camp
 gss_shuffle <- gss_tbl[rows, ] #same as above comment
 gss_split <- round(nrow(gss_shuffle) * 0.75) #creating split data per data camp
 gss_train <- gss_shuffle[1:gss_split, ] #creating train data per data camp
-gss_test <- gss_shuffle[(gss_split + 1):nrow(gss_shuffle), ] #creating test data per data camp
+gss_test <- gss_shuffle[(gss_split + 1):nrow(gss_shuffle), ] #creating test data per data camp/ this is also the holdout data
 
 ###Pre-setting things needed for models
 index_folds <- createFolds(gss_train$`work hours`, 10) #creating folds for indexout. 
@@ -49,7 +49,7 @@ Ols_Model <- train(`work hours` ~ ., #predicting work hours from all variables i
               trControl = myControl #used so I didn't have to retype every time. 
 )
 
-OLS_Model_test <- predict(Ols_Model, gss_test, na.action= na.pass) #testing OLS model on test data
+OLS_Model_test <- predict(Ols_Model, gss_test, na.action= na.pass) #testing OLS model on test data, so the holdout CV
 
 ###Elastic Net model
 
@@ -64,16 +64,31 @@ EN_Model <- train(`work hours` ~ .,
               na.action = na.pass, #need otherwise it won't work
               trControl = myControl) #same as above
 
-EN_Model_test <- predict(EN_Model, gss_test, na.action= na.pass) #testing EN model on test data
+EN_Model_test <- predict(EN_Model, gss_test, na.action= na.pass) #testing EN model on test data, holdout CV
 
 ###Random Forest Model
 
-RF_grid <- expand.grid(mtry= 510 , splitrule= 'variance' , min.node.size= 5 ) #number for mtry chosen through trial and error
+RF_grid <- expand.grid(mtry= 510 , splitrule= 'variance' , min.node.size= 5 ) #number for mtry chosen through trial and error, used these parameters based on the guide from slides
 RF_Model <- train(`work hours` ~ ., 
                 data= gss_train, 
                 tuneGrid= RF_grid,
+                metric= "RSquared",
                 method= "ranger", #random forest model 
                 preProcess= "medianImpute",
                 na.action= na.pass,
                 trControl=myControl)
-RF_Model_test <- predict(RF_Model, gss_test, na.action= na.pass) #testing RF model on test data
+RF_Model_test <- predict(RF_Model, gss_test, na.action= na.pass) #testing RF model on test data, holdout CV
+
+####eXtreme Gradient Boosting
+XGB_grid <- expand.grid(nrounds= 50, alpha =1, lambda =.1, eta=.1) #used chatgpt to figure out the grid options for XGB
+
+XGB_Model <- train(`work hours` ~ .,
+                   data= gss_train,
+                   tuneGrid= XGB_grid,
+                   method= "xgbLinear", #to do the xgb model
+                   preProcess="medianImpute",
+                   na.action= na.pass,
+                   trControl= myControl
+                   )
+XGB_Model_test <- predict(XGB_Model, gss_test, na.action= na.pass)
+
