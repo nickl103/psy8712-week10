@@ -51,8 +51,10 @@ OLS_Model <- train(`work hours` ~ ., #predicting work hours from all variables i
 OLS_Model_test <- predict(Ols_Model, gss_test, na.action= na.pass) #testing OLS model on test data, so the holdout CV
 
 #calculating and formatting numbers for publication section
-OLS_cv_rsq <- OLS_Model$results$Rsquared[1]
-OLS_ho_rsq <- cor(OLS_Model_test, gss_test$`work hours`)^2
+OLS_cv_rsq <- sub("^0", "", formatC(OLS_Model$results$Rsquared[1], format='f', digits= 2))
+OLS_ho_rsq <- cor(OLS_Model_test, gss_test$`work hours`)^2 
+OLS_ho_rsq_f <- sub("^0", "", formatC(OLS_ho_rsq, format='f', digits= 2))
+
 ###Elastic Net model
 
 myGrid <- expand.grid(alpha =0:1, lambda =seq(0.0001, 0.1, length = 10)) #setting gridsearch for hyperparameters, used numbers from data camp
@@ -67,8 +69,10 @@ EN_Model <- train(`work hours` ~ .,
 
 EN_Model_test <- predict(EN_Model, gss_test, na.action= na.pass) #testing EN model on test data, holdout CV
 
-EN_cv_rsq <- EN_Model$results$Rsquared[1]
-EN_ho_rsq <- cor(EN_Model_test, gss_test$`work hours`)^2
+
+EN_cv_rsq <- sub("^0", "", formatC(EN_Model$results$Rsquared[1], format='f', digits= 2))
+EN_ho_rsq <- cor(EN_Model_test, gss_test$`work hours`)^2 
+EN_ho_rsq_f <- sub("^0", "", formatC(EN_ho_rsq, format='f', digits= 2))
 ###Random Forest Model
 
 RF_grid <- expand.grid(mtry= 510 , splitrule= 'variance' , min.node.size= 5 ) #number for mtry chosen through trial and error, used these parameters based on the guide from slides
@@ -82,8 +86,10 @@ RF_Model <- train(`work hours` ~ .,
                 trControl=myControl)
 RF_Model_test <- predict(RF_Model, gss_test, na.action= na.pass) #testing RF model on test data, holdout CV
 
-RF_cv_rsq <- RF_Model$results$Rsquared[1]
-RF_ho_rsq <- cor(RF_Model_test, gss_test$`work hours`)^2
+
+RF_cv_rsq <- sub("^0", "", formatC(RF_Model$results$Rsquared[1], format='f', digits= 2))
+RF_ho_rsq <- cor(RF_Model_test, gss_test$`work hours`)^2 
+RF_ho_rsq_f <- sub("^0", "", formatC(RF_ho_rsq, format='f', digits= 2))
 ####eXtreme Gradient Boosting
 XGB_grid <- expand.grid(nrounds= 50, alpha =1, lambda =.1, eta=.1) #used chatgpt to figure out the grid options for XGB
 
@@ -97,6 +103,8 @@ XGB_Model <- train(`work hours` ~ .,
                    )
 XGB_Model_test <- predict(XGB_Model, gss_test, na.action= na.pass)
 
-XGB_cv_rsq <- XGB_Model$results$Rsquared[1]
-XGB_ho_rsq <- cor(XGB_Model_test, gss_test$`work hours`)^2
 
+
+XGB_cv_rsq <- sub("^0", "", formatC(XGB_Model$results$Rsquared[1], format='f', digits= 2))
+XGB_ho_rsq <- cor(XGB_Model_test, gss_test$`work hours`)^2 
+XGB_ho_rsq_f <- sub("^0", "", formatC(XGB_ho_rsq, format='f', digits= 2))
