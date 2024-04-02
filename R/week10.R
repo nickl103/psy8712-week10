@@ -41,31 +41,39 @@ myControl <- trainControl(
 
 ###OLS model
 Ols_Model <- train(`work hours` ~ ., #predicting work hours from all variables in dataset
-  data = gss_train, #using split train data for 10-fold CV
-  method = "lm", #lm for OLS model
-  metric = "Rsquared", #will need later for publication section
-  preProcess = "medianImpute", #median Impute to deal with missing values per assignment instructions
-  na.action = na.pass, #so model will go passed nas and actually run otherwise it won't work 
-  trControl = myControl #used so I didn't have to retype every time. 
+              data = gss_train, #using split train data for 10-fold CV
+              method = "lm", #lm for OLS model
+              metric = "Rsquared", #will need later for publication section
+              preProcess = "medianImpute", #median Impute to deal with missing values per assignment instructions
+              na.action = na.pass, #so model will go passed nas and actually run otherwise it won't work 
+              trControl = myControl #used so I didn't have to retype every time. 
 )
 
 OLS_Model_test <- predict(Ols_Model, gss_test, na.action= na.pass) #testing OLS model on test data
 
 ###Elastic Net model
 
-myGrid <- expand.grid(alpha =1, lambda =.1) #setting gridsearch for hyperparameters
+myGrid <- expand.grid(alpha =0:1, lambda =seq(0.0001, 0.1, length = 10)) #setting gridsearch for hyperparameters, used numbers from data camp
 
 EN_Model <- train(`work hours` ~ ., 
-  data = gss_train, 
-  tuneGrid = myGrid,
-  method = "glmnet",#used glmnet to run the elastic net model
-  metric= "Rsquared", # need later
-  preProcess = "medianImpute", #median Impute per assignment 
-  na.action = na.pass, #need otherwise it won't work
-  trControl = myControl) #same as above
+              data = gss_train, 
+              tuneGrid = myGrid,
+              method = "glmnet",#used glmnet to run the elastic net model
+              metric= "Rsquared", # need later
+              preProcess = "medianImpute", #median Impute per assignment 
+              na.action = na.pass, #need otherwise it won't work
+              trControl = myControl) #same as above
 
 EN_Model_test <- predict(EN_Model, gss_test, na.action= na.pass) #testing EN model on test data
 
 ###Random Forest Model
 
-RF_grid <- tunegrid
+RF_grid <- expand.grid(mtry= 510 , splitrule= 'variance' , min.node.size= 5 ) #number for mtry chosen through trial and error
+RF_Model <- train(`work hours` ~ ., 
+                data= gss_train, 
+                tuneGrid= RF_grid,
+                method= "ranger", #random forest model 
+                preProcess= "medianImpute",
+                na.action= na.pass,
+                trControl=myControl)
+RF_Model_test <- predict(RF_Model, gss_test, na.action= na.pass) #testing RF model on test data
