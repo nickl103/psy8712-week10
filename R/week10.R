@@ -108,3 +108,16 @@ XGB_Model_test <- predict(XGB_Model, gss_test, na.action= na.pass)
 XGB_cv_rsq <- sub("^0", "", formatC(XGB_Model$results$Rsquared[1], format='f', digits= 2))
 XGB_ho_rsq <- cor(XGB_Model_test, gss_test$`work hours`)^2 
 XGB_ho_rsq_f <- sub("^0", "", formatC(XGB_ho_rsq, format='f', digits= 2))
+
+#Publication
+table1_tbl <- tibble(
+  algo= c("OLS Regression", "Elastic Net", "Random Forest","eXtreme Gradient Boosting"),
+  cv_rsq = c(OLS_cv_rsq, EN_cv_rsq, RF_cv_rsq, XGB_cv_rsq),
+  ho_rsq = c(OLS_ho_rsq_f, EN_ho_rsq_f, RF_ho_rsq_f, XGB_ho_rsq_f))
+
+table1_tbl
+#1. The Rsquared got bigger with each model, with the exception of the the Random Forest explaining more than the eXtreme Gradient Boosting Model. This happened because the more hyperparameters added in each model, the more of the variance was explained by the model, which is what the rsqaured is showing. 
+#2.The 10-fold CV models had lower R-squareds for each of the four model types, by a pretty large margin. This is probably due to the models having more specifications so they overfit the models compared to the holdout models. 
+#3. I would choose the random forest model as it had the best Rsquared by for both the k-hold Cv model and the holdout models. The random forest model has a lot of complexity so it may be overcomplicated for real-life problem prediction but I think the amount of variance explained might make it worth it especially for the test models. 
+
+
